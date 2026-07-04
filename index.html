@@ -1,99 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Royal Project Manager</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <title>Project Management Tool</title>
   <style>
-    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #667eea, #764ba2); margin: 0; padding: 20px; color: #333; }
-    .container { max-width: 1000px; margin: auto; }
-    h1 { color: white; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
-    .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); margin-bottom: 20px; }
-    input, select, button { padding: 12px; margin: 8px 5px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; }
-    button { background: #667eea; color: white; border: none; cursor: pointer; font-weight: 600; transition: 0.3s; }
-    button:hover { background: #764ba2; transform: translateY(-2px); }
-    .kanban { display: flex; gap: 15px; margin-top: 15px; }
-    .column { flex: 1; background: #f3f4f6; padding: 15px; border-radius: 12px; min-height: 200px; }
-    .column h4 { text-align: center; color: #667eea; margin-top: 0; }
-    .task { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #667eea; }
-    .task select { width: 100%; margin-top: 8px; }
+    body { font-family: Arial; background: #0a1a3a; color: white; padding: 20px; }
+    h1 { color: #ffc107; }
+    .card { background: #1e3a6e; padding: 20px; border-radius: 10px; margin: 10px; }
+    input, button { padding: 10px; border-radius: 8px; border: 2px solid #ffc107; background: #0a1a3a; color: white; }
+    button { background: #ffc107; color: black; font-weight: bold; cursor: pointer; }
+    .kanban { display: flex; gap: 10px; }
+    .column { flex: 1; background: #1e3a6e; padding: 15px; border-radius: 10px; min-height: 200px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Royal Project Manager 🚀</h1>
+  <h1>Project Management Tool</h1>
 
-    <div class="card">
-      <h3>Create New Task / Project Item</h3>
-      <input id="title" placeholder="Task Name / Project Title">
-      <input id="description" placeholder="Description / Assigned To">
-      <input id="deadline" type="date">
-      <button onclick="addTask()">+ Add Task</button>
-    </div>
-
-    <div class="card">
-      <h3>Track Progress</h3>
-      <div id="kanban" class="kanban">
-        <div class="column"><h4>📝 To Do</h4><div id="todo"></div></div>
-        <div class="column"><h4>⚡ In Progress</h4><div id="progress"></div></div>
-        <div class="column"><h4>✅ Done</h4><div id="done"></div></div>
-      </div>
-    </div>
+  <div class="card">
+    <h3>New Task</h3>
+    <input id="title" placeholder="Task Name">
+    <input id="due" type="date">
+    <button onclick="addTask()">+ Add Task</button>
+    <p id="msg"></p>
   </div>
 
-  <script>
-    const API = "https://royal-project-hvye.vercel.app";
+  <div class="kanban">
+    <div class="column"><h4>In Progress</h4><div id="todo"></div></div>
+    <div class="column"><h4>Done</h4><div id="done"></div></div>
+  </div>
+
+<script>
+const API = "https://royal-project-hvye.vercel.app";
+loadTasks();
+
+async function addTask() {
+  const title = document.getElementById("title").value;
+  const due = document.getElementById("due").value;
+  if(!title) return alert("Task name podu");
+  
+  const res = await fetch(API + "/tasks", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({title: title, due: due, status: "To Do"})
+  });
+  
+  if(res.ok){
+    document.getElementById("msg").innerText = "✅ Task Added";
+    document.getElementById("title").value = "";
     loadTasks();
+  } else {
+    document.getElementById("msg").innerText = "❌ Error: " + res.status;
+  }
+}
 
-    async function addTask() {
-      const task = {
-        title: document.getElementById("title").value,
-        description: document.getElementById("description").value,
-        status: "To Do"
-      };
-      await fetch(API + "/tasks", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(task)
-      });
-      document.getElementById("title").value = "";
-      document.getElementById("description").value = "";
-      loadTasks();
-    }
-
-    async function loadTasks() {
-      const res = await fetch(API + "/tasks");
-      const tasks = await res.json();
-      
-      document.getElementById("todo").innerHTML = "";
-      document.getElementById("progress").innerHTML = "";
-      document.getElementById("done").innerHTML = "";
-
-      tasks.forEach(t => {
-        const taskHTML = `
-          <div class="task">
-            <b>${t.title}</b><br>
-            <small>${t.description}</small>
-            <select onchange="updateStatus('${t._id}', this.value)">
-              <option ${t.status=="To Do"?"selected":""}>To Do</option>
-              <option ${t.status=="In Progress"?"selected":""}>In Progress</option>
-              <option ${t.status=="Done"?"selected":""}>Done</option>
-            </select>
-          </div>`;
-        
-        if(t.status == "To Do") document.getElementById("todo").innerHTML += taskHTML;
-        if(t.status == "In Progress") document.getElementById("progress").innerHTML += taskHTML;
-        if(t.status == "Done") document.getElementById("done").innerHTML += taskHTML;
-      });
-    }
-
-    async function updateStatus(id, status) {
-      await fetch(API + `/tasks/${id}`, {
-        method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({status})
-      });
-      loadTasks();
-    }
-  </script>
+async function loadTasks() {
+  const res = await fetch(API + "/tasks");
+  const tasks = await res.json();
+  document.getElementById("todo").innerHTML = tasks.map(t=>`<div class="card">${t.title}</div>`).join('');
+}
+</script>
 </body>
 </html>
