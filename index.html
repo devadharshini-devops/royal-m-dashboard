@@ -96,7 +96,7 @@ async function loadTasks() {
 }
 
 // 3. Update Status
-async function updateStatus(id, status) {
+async function updatestatus(id, status) {
   await fetch(`${API}/updatestatus/${id}`, {
     method: "PUT",
     headers: {"Content-Type": "application/json"},
