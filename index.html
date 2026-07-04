@@ -4,110 +4,83 @@
 <meta charset="UTF-8">
 <title>Royal Project Management Tool</title>
 <style>
-  body { background: #0a1a3a; color: white; font-family: Arial; text-align: center; }
-  h1 { color: gold; }
-  .container { width: 90%; margin: auto; }
-  .add-task { background: #122c5a; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-  input, button { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid gold; background: #0a1a3a; color: gold; }
-  button { background: gold; color: #0a1a3a; font-weight: bold; cursor: pointer; }
-  .board { display: flex; justify-content: space-around; }
-  .task-column { background: #122c5a; width: 30%; padding: 10px; border-radius: 10px; min-height: 300px; }
-  .task-column h3 { border-bottom: 2px solid gold; padding-bottom: 5px; }
-  .task { background: #1a2a4d; padding: 10px; margin: 10px 0; border-radius: 8px; text-align: left; }
-  .task button { padding: 5px 8px; font-size: 12px; margin: 2px; }
+body { background: #0a1a3a; color: white; font-family: Arial; text-align: center; }
+h1 { color: gold; }
+.container { width: 90%; margin: auto; }
+.add-task { background: #122c5a; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+input, button { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid gold; background: #0a1a3a; color: gold; }
+button { background: gold; color: #0a1a3a; font-weight: bold; cursor: pointer; }
+.board { display: flex; justify-content: space-around; }
+.task-column { background: #122c5a; width: 30%; padding: 10px; border-radius: 10px; min-height: 300px; }
+.task-column h3 { border-bottom: 2px solid gold; padding-bottom: 5px; }
+.task { background: #1a2a4d; padding: 10px; margin: 10px 0; border-radius: 8px; text-align: left; }
+.task button { padding: 5px 8px; font-size: 12px; margin: 2px; }
 </style>
 </head>
 <body>
-
-<h1>👑 Royal Project Management Tool</h1>
-
 <div class="container">
+  <h1>👑 Royal Project Management Tool</h1>
+  
   <div class="add-task">
     <h3>Add New Task</h3>
     <input type="text" id="title" placeholder="Task Title">
     <input type="text" id="project" placeholder="Project Name">
     <input type="text" id="assigned" placeholder="Assigned To">
-    <input type="date" id="deadline">
-    <br>
+    <input type="date" id="due">
     <button onclick="addTask()">+ Add Task</button>
   </div>
 
   <div class="board">
-    <div class="task-column">
-      <h3>📝 Todo</h3>
-      <div id="todo"></div>
-    </div>
-    <div class="task-column">
-      <h3>⚡ In Progress</h3>
-      <div id="progress"></div>
-    </div>
-    <div class="task-column">
-      <h3>✅ Done</h3>
-      <div id="done"></div>
-    </div>
+    <div class="task-column"><h3>📝 Todo</h3><div id="todo"></div></div>
+    <div class="task-column"><h3>⚡ In Progress</h3><div id="inprogress"></div></div>
+    <div class="task-column"><h3>✅ Done</h3><div id="done"></div></div>
   </div>
 </div>
 
 <script>
-const API = "http://localhost:5000";
+const API = "https://royal-project-hvye.vercel.app";
 
-// 1. Add Task
+async function loadTasks() {
+  const res = await fetch(API + "/tasks");
+  const tasks = await res.json();
+  document.getElementById("todo").innerHTML = "";
+  document.getElementById("inprogress").innerHTML = "";
+  document.getElementById("done").innerHTML = "";
+  tasks.forEach(task => {
+    const div = document.createElement("div");
+    div.className = "task";
+    div.innerHTML = `<b>${task.title}</b><br>${task.project}<br>${task.assigned}<br>${task.due}
+    <br><button onclick="updateStatus('${task._id}','In Progress')">Start</button>
+    <button onclick="updateStatus('${task._id}','Done')">Done</button>
+    <button onclick="deleteTask('${task._id}')">Delete</button>`;
+    document.getElementById(task.status.toLowerCase().replace(" ","")).appendChild(div);
+  });
+}
+
 async function addTask() {
   const task = {
     title: document.getElementById("title").value,
     project: document.getElementById("project").value,
-    assignedTo: document.getElementById("assigned").value,
-    deadline: document.getElementById("deadline").value,
+    assigned: document.getElementById("assigned").value,
+    due: document.getElementById("due").value,
+    status: "Todo"
   };
-  await fetch(`${API}/addtask`, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(task)
-  });
-  alert("Task Added ✅");
-  loadTasks(); 
+  await fetch(API + "/tasks", {method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(task)});
   document.getElementById("title").value = "";
+  loadTasks();
 }
 
-// 2. Load All Tasks
-async function loadTasks() {
-  const res = await fetch(`${API}/tasks`);
-  const tasks = await res.json();
-  
-  document.getElementById("todo").innerHTML = "";
-  document.getElementById("progress").innerHTML = "";
-  document.getElementById("done").innerHTML = "";
-
-  tasks.forEach(t => {
-    const div = `<div class="task">
-      <b>${t.title}</b><br>
-      Project: ${t.project}<br>
-      To: ${t.assignedTo}<br>
-      Due: ${t.deadline ? t.deadline.split("T")[0] : ''}<br>
-      <button onclick="updateStatus('${t._id}', 'Todo')">Todo</button>
-      <button onclick="updateStatus('${t._id}', 'In Progress')">Progress</button>
-      <button onclick="updateStatus('${t._id}', 'Done')">Done</button>
-    </div>`;
-    
-    if(t.status === "Todo") document.getElementById("todo").innerHTML += div;
-    if(t.status === "In Progress") document.getElementById("progress").innerHTML += div;
-    if(t.status === "Done") document.getElementById("done").innerHTML += div;
-  });
+async function updateStatus(id, status) {
+  await fetch(API + "/tasks/" + id, {method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({status})});
+  loadTasks();
 }
 
-// 3. Update Status
-async function updatestatus(id, status) {
-  await fetch(`${API}/updatestatus/${id}`, {
-    method: "PUT",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({status})
-  });
-  loadTasks(); 
+async function deleteTask(id) {
+  await fetch(API + "/tasks/" + id, {method: "DELETE"});
+  loadTasks();
 }
 
-// Page open aana odane load aagum
-window.onload = loadTasks;
+loadTasks();
 </script>
-
 </body>
 </html>
