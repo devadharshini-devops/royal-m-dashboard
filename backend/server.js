@@ -6,7 +6,7 @@ const app = express();
 app.use(cors()); // MUKKIYAM: Indha line illana frontend connect aagathu
 app.use(express.json());
 
-mongoose.connect("YOUR_MONGODB_LINK", {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: true});
 
 const TaskSchema = new mongoose.Schema({
   title: String,
