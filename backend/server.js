@@ -1,41 +1,18 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-
 const app = express();
-app.use(cors()); // MUKKIYAM: Indha line illana frontend connect aagathu
+
+app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(process.env.MONGO_URI) 
+.then(()=> console.log("DB Connected"))
+.catch(err=> console.log(err));
 
-const TaskSchema = new mongoose.Schema({
-  title: String,
-  project: String,
-  assigned: String,
-  due: String,
-  status: {type: String, default: "Todo"}
-});
-const Task = mongoose.model("Task", TaskSchema);
+const Task = mongoose.model("Task", {title:String,project:String,assigned:String,due:String,status:String});
 
-app.get("/tasks", async (req,res) => {
-  const tasks = await Task.find();
-  res.json(tasks);
-});
+app.get("/tasks", async (req,res)=> { res.json(await Task.find()) });
+app.post("/tasks", async (req,res)=> { res.json(await Task.create(req.body)) });
 
-app.post("/tasks", async (req,res) => {
-  const task = new Task(req.body);
-  await task.save();
-  res.json(task);
-});
-
-app.put("/tasks/:id", async (req,res) => {
-  await Task.findByIdAndUpdate(req.params.id, req.body);
-  res.json({msg:"Updated"});
-});
-
-app.delete("/tasks/:id", async (req,res) => {
-  await Task.findByIdAndDelete(req.params.id);
-  res.json({msg:"Deleted"});
-});
-
-app.listen(5000, () => console.log("Server running"));
+app.listen(5000);
