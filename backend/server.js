@@ -38,4 +38,7 @@ app.put("/updatestatus/:id", async (req, res) => {
   res.send("Status Updated ✅");
 });
 
+app.get("/", (req, res) => {
+  res.send("Backend is running on Vercel ✅");
+});
 app.listen(5000, () => console.log("Server running on 5000 ✅"));
