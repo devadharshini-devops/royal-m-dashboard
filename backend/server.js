@@ -5,10 +5,17 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Frontend 
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-let tasks = [];
+// Home page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
 
+// API
+let tasks = [];
 app.get("/api/tasks", (req, res) => { res.json(tasks); });
 app.post("/api/tasks", (req, res) => {
   const task = { id: Date.now(), ...req.body };
