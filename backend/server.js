@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 // Frontend 
-app.use(express.static(path.join(__dirname, "../frontend")));
+app.use(express.static(path.join(__dirname, "frontend")));
 
 // Home page
 app.get("/", (req, res) => {
