@@ -1,31 +1,21 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-require("dotenv").config();
-
+const express = require('express');
+const cors = require('cors');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI)
-.then(()=> console.log("DB Connected"))
-.catch(err=> console.log(err));
+let tasks = [];
 
-const Task = mongoose.model("Task", {
-  title:String,
-  project:String,
-  assigned:String,
-  due:String,
-  status:{ type: String, default: "To Do" } 
+app.get('/api/tasks', (req, res) => {
+  res.json(tasks);
 });
 
-app.get("/tasks", async (req,res)=> { res.json(await Task.find()) });
-
-app.post("/tasks", async (req,res)=> { res.json(await Task.create(req.body)) });
-
-app.put("/tasks/:id", async (req,res)=> { 
-  res.json(await Task.findByIdAndUpdate(req.params.id, req.body, {new: true})) 
+app.post('/api/tasks', (req, res) => {
+  const task = { id: Date.now(), ...req.body };
+  tasks.push(task);
+  res.json(task);
 });
 
-app.listen(3000);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
