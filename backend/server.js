@@ -13,7 +13,7 @@ app.post('/api/tasks', (req, res) => { const task = { id: Date.now(), ...req.bod
 app.put('/api/tasks/:id', (req, res) => { const id = parseInt(req.params.id); const task = tasks.find(t => t.id === id); if (task) { task.status = req.body.status; res.json(task); } else { res.status(404).json({ error: 'Task not found' }); } });
 app.delete('/api/tasks/:id', (req, res) => { const id = parseInt(req.params.id); tasks = tasks.filter(t => t.id !== id); res.json({ success: true }); });
 
-// idha last la add pannu
+
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.get('*', (req, res) => { res.sendFile(path.join(__dirname, '../frontend/index.html')); });
 
