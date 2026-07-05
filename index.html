@@ -1,86 +1,94 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Royal Task Manager</title>
   <style>
     body { font-family: Arial; padding: 20px; background: #f5f5f5; }
-    .container { display: flex; gap: 20px; }
-    .column { background: white; padding: 15px; border-radius: 8px; width: 50%; }
-    .task { background: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 5px; }
-    input, button { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; }
-    button { background: #1976d2; color: white; cursor: pointer; }
-    button:hover { background: #1565c0; }
-    h3 { text-align: center; }
-    #msg { color: green; }
+    h1 { text-align: center; }
+    .form { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    input, select, button { padding: 8px; margin: 5px; }
+    .board { display: flex; gap: 10px; }
+    .column { flex: 1; background: white; padding: 10px; border-radius: 8px; }
+    .task { background: #e3f2fd; padding: 10px; margin: 5px 0; border-radius: 5px; }
+    button { cursor: pointer; }
   </style>
 </head>
 <body>
-
-<h2>Royal Task Manager</h2>
-
-<input type="text" id="title" placeholder="Task Title">
-<input type="date" id="due">
-<button onclick="addTask()">Add Task</button>
-<p id="msg"></p>
-
-<div class="container">
-  <div class="column">
-    <h3>Todo</h3>
-    <div id="todo"></div>
-  </div>
-  <div class="column">
-    <h3>Done</h3>
-    <div id="done"></div>
-  </div>
-</div>
-
-<script>
-const API = "https://royal-project-hvye.vercel.app";
-
-loadTasks();
-
-async function loadTasks() {
-  const res = await fetch(API + "/tasks");
-  const tasks = await res.json();
+  <h1>👑 Royal Task Manager</h1>
   
-  document.getElementById("todo").innerHTML = "";
-  document.getElementById("done").innerHTML = "";
+  <div class="form">
+    <input id="title" placeholder="Task Title">
+    <input id="assignee" placeholder="Assignee">
+    <select id="priority">
+      <option>Low</option>
+      <option>Medium</option>
+      <option>High</option>
+    </select>
+    <button onclick="addTask()">Add Task</button>
+  </div>
 
-  tasks.forEach(task => {
-    const div = document.createElement("div");
-    div.className = "task";
-    div.innerHTML = `<b>${task.title}</b><br>Due: ${task.due}`;
-    
-    if(task.status === "done") {
-      document.getElementById("done").appendChild(div);
-    } else {
-      document.getElementById("todo").appendChild(div);
+  <div class="board">
+    <div class="column"><h3>To Do</h3><div id="todo"></div></div>
+    <div class="column"><h3>In Progress</h3><div id="progress"></div></div>
+    <div class="column"><h3>Done</h3><div id="done"></div></div>
+  </div>
+
+  <script>
+    const API = '/api/tasks';
+
+    async function loadTasks() {
+      const res = await fetch(API);
+      const tasks = await res.json();
+      document.getElementById('todo').innerHTML = '';
+      document.getElementById('progress').innerHTML = '';
+      document.getElementById('done').innerHTML = '';
+      
+      tasks.forEach(t => {
+        const div = document.createElement('div');
+        div.className = 'task';
+        div.innerHTML = `
+          <b>${t.title}</b><br>
+          ${t.assignee} - ${t.priority}<br>
+          <button onclick="updateTask(${t.id}, 'In Progress')">Progress</button>
+          <button onclick="updateTask(${t.id}, 'Done')">Done</button>
+          <button onclick="deleteTask(${t.id})">Delete</button>
+        `;
+        if(t.status === 'To Do') document.getElementById('todo').appendChild(div);
+        if(t.status === 'In Progress') document.getElementById('progress').appendChild(div);
+        if(t.status === 'Done') document.getElementById('done').appendChild(div);
+      });
     }
-  });
-}
 
-async function addTask() {
-  const title = document.getElementById("title").value;
-  const due = document.getElementById("due").value;
-  const msg = document.getElementById("msg");
+    async function addTask() {
+      const title = document.getElementById('title').value;
+      const assignee = document.getElementById('assignee').value;
+      const priority = document.getElementById('priority').value;
+      await fetch(API, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({title, assignee, priority, status: 'To Do'})
+      });
+      loadTasks();
+    }
 
-  if(!title || !due) {
-    msg.innerText = "Please fill all fields";
-    return;
-  }
+    async function updateTask(id, status) {
+      await fetch(`${API}/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status})
+      });
+      loadTasks();
+    }
 
-  await fetch(API + "/tasks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, due, status: "todo" })
-  });
+    async function deleteTask(id) {
+      await fetch(`${API}/${id}`, {method: 'DELETE'});
+      loadTasks();
+    }
 
-  document.getElementById("title").value = "";
-  document.getElementById("due").value = "";
-  msg.innerText = "Task Added!";
-  loadTasks();
-}
-</script>
-
+    loadTasks();
+  </script>
 </body>
 </html>
